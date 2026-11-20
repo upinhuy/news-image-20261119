@@ -7,7 +7,7 @@
 // Run it locally with:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,4 +19,12 @@ if (!existsSync(imagePath)) {
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 mkdirSync(outDir, { recursive: true });
-copyFileSync(imagePath, join(outDir, "entry.png"));
+const outPath = join(outDir, "entry.png");
+copyFileSync(imagePath, outPath);
+
+// Confirm the copy is whole: same byte count as the image in the repo.
+const sourceBytes = statSync(imagePath).size;
+const copiedBytes = statSync(outPath).size;
+if (sourceBytes !== copiedBytes) {
+  throw new Error(`entry.png copy is incomplete: ${copiedBytes} of ${sourceBytes} bytes`);
+}
